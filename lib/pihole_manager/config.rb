@@ -10,6 +10,7 @@ module PiHoleManager
       'container_name' => 'pihole',
       'image' => 'pihole/pihole:latest',
       'config_root' => '/opt/pihole',
+      'data_dir' => '/opt/pihole',
       'etc_pihole' => '/opt/pihole/etc-pihole',
       'etc_dnsmasq' => '/opt/pihole/etc-dnsmasq.d',
       'log_file' => '/opt/pihole/pihole-manager.log',

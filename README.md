@@ -8,6 +8,8 @@ A Ruby-based CLI tool for managing Pi-hole DNS server deployments using Docker o
 - **Interactive CLI Menu**: User-friendly menu system for all operations
 - **Direct Commands**: Power-user friendly command-line interface
 - **Domain Management**: Block/unblock domains with bulk operations support
+- **Time-Based Blocking**: Schedule automatic blocking during specific hours/days
+- **Device-Specific Control**: Target blocking to specific devices or network-wide
 - **Configuration Management**: Backup, restore, and modify Pi-hole settings
 - **Monitoring & Logs**: View DNS statistics, query logs, and container status
 - **macOS Integration**: Designed specifically for macOS with Docker Desktop support
@@ -142,6 +144,24 @@ ruby pihole_manager.rb bulk-block <file>    # Block domains from file
 ruby pihole_manager.rb bulk-unblock <file>  # Unblock domains from file
 ```
 
+#### Schedule Management (Time-based Blocking)
+```bash
+# Create schedules
+ruby pihole_manager.rb schedule create --name Night_Block --start 22:00 --end 06:00
+ruby pihole_manager.rb schedule create --name Work_Hours --start 09:00 --end 17:00 --days weekdays
+
+# Manage schedules
+ruby pihole_manager.rb schedule list        # List all schedules
+ruby pihole_manager.rb schedule status      # Show current schedule status
+ruby pihole_manager.rb schedule enable Night_Block     # Enable a schedule
+ruby pihole_manager.rb schedule disable Night_Block    # Disable a schedule
+ruby pihole_manager.rb schedule delete Night_Block     # Delete a schedule
+
+# Test schedules
+ruby pihole_manager.rb schedule test Night_Block enable  # Test enable blocking
+ruby pihole_manager.rb schedule test Night_Block disable # Test disable blocking
+```
+
 #### Configuration & Monitoring
 ```bash
 ruby pihole_manager.rb backup <path>        # Backup configuration
@@ -157,6 +177,206 @@ ruby pihole_manager.rb --help               # Show help information
 ruby pihole_manager.rb --version            # Show script version
 ruby pihole_manager.rb --verbose            # Enable verbose output
 ruby pihole_manager.rb --config <file>      # Use custom config file
+```
+
+## ⏰ Time-Based Blocking
+
+### Overview
+The Pi-hole manager includes powerful scheduling capabilities that allow you to automatically block or allow internet access during specific times. This is perfect for:
+
+- **Parental controls** - Block internet during bedtime or study hours
+- **Digital detox** - Schedule internet-free periods
+- **Work/school focus** - Block distracting sites during work hours
+- **Device management** - Control specific devices on your network
+
+### How It Works
+Time-based blocking uses:
+1. **Pi-hole Groups** to organize blocking rules
+2. **Regex filters** to block all domains or specific categories
+3. **Automatic cron jobs** to enable/disable blocking on schedule
+4. **Database operations** to manage Pi-hole group states
+
+### Quick Start Examples
+
+#### Network-Wide Blocking
+```bash
+# Block all devices from 10 PM to 6 AM every day
+ruby pihole_manager.rb schedule create \
+  --name "Night_Block" \
+  --start 22:00 \
+  --end 06:00
+
+# Block all devices on weekends from 8 PM to 11 PM
+ruby pihole_manager.rb schedule create \
+  --name "Weekend_Block" \
+  --start 20:00 \
+  --end 23:00 \
+  --days weekends
+```
+
+#### Device-Specific Blocking
+```bash
+# Block specific devices during work hours
+ruby pihole_manager.rb schedule create \
+  --name "Work_Focus" \
+  --start 09:00 \
+  --end 17:00 \
+  --days weekdays \
+  --devices 192.168.1.50,192.168.1.51
+
+# Block kids' devices during bedtime
+ruby pihole_manager.rb schedule create \
+  --name "Kids_Bedtime" \
+  --start 21:00 \
+  --end 07:00 \
+  --devices 192.168.1.100,192.168.1.101
+```
+
+#### Custom Day Schedules
+```bash
+# Block on specific days
+ruby pihole_manager.rb schedule create \
+  --name "Study_Days" \
+  --start 14:00 \
+  --end 18:00 \
+  --days "mon,wed,fri"
+
+# Block Tuesday and Thursday evenings
+ruby pihole_manager.rb schedule create \
+  --name "Evening_Block" \
+  --start 19:00 \
+  --end 22:00 \
+  --days "tue,thu"
+```
+
+### Interactive Menu
+Access scheduling through the interactive menu:
+```
+5. Schedule Management
+   1. Create new schedule
+   2. List all schedules
+   3. Show schedule status
+   4. Enable schedule
+   5. Disable schedule
+   6. Test schedule
+   7. Delete schedule
+```
+
+### Schedule Management
+
+#### Create Schedules
+Use the `schedule create` command with these options:
+- `--name`: Unique schedule name (letters, numbers, underscore, dash)
+- `--start`: Start time in HH:MM format (24-hour)
+- `--end`: End time in HH:MM format (24-hour)
+- `--days`: Optional - `all`, `weekdays`, `weekends`, or custom (e.g., `mon,tue,wed`)
+- `--devices`: Optional - Comma-separated IP addresses (default: all devices)
+
+#### List and Monitor
+```bash
+# View all configured schedules
+ruby pihole_manager.rb schedule list
+
+# Check current status (which schedules are active)
+ruby pihole_manager.rb schedule status
+```
+
+#### Enable/Disable
+```bash
+# Enable a schedule
+ruby pihole_manager.rb schedule enable Night_Block
+
+# Disable a schedule
+ruby pihole_manager.rb schedule disable Night_Block
+```
+
+#### Testing
+```bash
+# Test enable blocking immediately
+ruby pihole_manager.rb schedule test Night_Block enable
+
+# Test disable blocking immediately
+ruby pihole_manager.rb schedule test Night_Block disable
+```
+
+#### Delete Schedules
+```bash
+# Delete a schedule (removes cron jobs and Pi-hole groups)
+ruby pihole_manager.rb schedule delete Night_Block
+```
+
+### Advanced Features
+
+#### Overnight Schedules
+Schedules can span midnight:
+```bash
+# Block from 10 PM to 6 AM (crosses midnight)
+ruby pihole_manager.rb schedule create \
+  --name "Overnight_Block" \
+  --start 22:00 \
+  --end 06:00
+```
+
+#### Day Format Options
+Multiple ways to specify days:
+- **Numbers**: `1,2,3,4,5` (Monday=1, Sunday=7)
+- **Names**: `mon,tue,wed,thu,fri`
+- **Full names**: `monday,tuesday,wednesday`
+- **Presets**: `all`, `weekdays`, `weekends`
+
+#### Schedule Status Display
+The status command shows:
+- Currently active schedules
+- Next schedule changes
+- Time until next change
+- Which devices are affected
+
+### Technical Details
+
+#### Automatic Cron Management
+The manager automatically:
+- Creates cron jobs for each enabled schedule
+- Updates cron jobs when schedules change
+- Removes cron jobs when schedules are deleted
+- Manages Pi-hole group states via SQLite database
+
+#### Pi-hole Groups
+Each schedule creates:
+- A Pi-hole group named `Schedule_<name>`
+- A regex filter `.*` to block all domains
+- Client associations for device-specific blocking
+- Automatic DNS restart when rules change
+
+#### Data Storage
+- Schedules stored in `<data_dir>/schedules.json`
+- Cron jobs managed automatically
+- Pi-hole database updated in real-time
+
+### Troubleshooting
+
+#### Common Issues
+```bash
+# Check if cron jobs are installed
+crontab -l | grep "PiHole Schedule"
+
+# Verify Pi-hole groups exist
+ruby pihole_manager.rb cli
+# Then: sqlite3 /etc/pihole/gravity.db "SELECT * FROM 'group' WHERE name LIKE 'Schedule_%';"
+
+# Test schedule immediately
+ruby pihole_manager.rb schedule test <name> enable
+```
+
+#### Manual Cleanup
+If needed, clean up manually:
+```bash
+# Remove cron jobs
+crontab -l | grep -v "PiHole Schedule" | crontab -
+
+# Access Pi-hole database to remove groups
+ruby pihole_manager.rb
+# Choose: 6. Advanced Options → 2. Container shell (bash)
+# Then: sqlite3 /etc/pihole/gravity.db "DELETE FROM 'group' WHERE name LIKE 'Schedule_%';"
 ```
 
 ## ⚙️ Configuration

@@ -19,24 +19,185 @@ def parse_arguments(args)
   command = args.shift
   options = {}
   
-  while args.any?
-    case args.first
+  # Parse all options, including those that come after subcommands
+  i = 0
+  while i < args.length
+    case args[i]
     when '--config'
-      args.shift
-      options[:config_path] = args.shift
+      options[:config_path] = args[i + 1]
+      args.slice!(i, 2)
     when '--verbose'
-      args.shift
       options[:verbose] = true
+      args.slice!(i, 1)
     when '--version'
       return { command: 'version' }
     when '--help'
       return { command: 'help' }
+    when '--name'
+      options[:name] = args[i + 1]
+      args.slice!(i, 2)
+    when '--start', '--start-time'
+      options[:start] = args[i + 1]
+      args.slice!(i, 2)
+    when '--end', '--end-time'
+      options[:end] = args[i + 1]
+      args.slice!(i, 2)
+    when '--days'
+      options[:days] = args[i + 1]
+      args.slice!(i, 2)
+    when '--devices'
+      options[:devices] = args[i + 1]
+      args.slice!(i, 2)
     else
-      break
+      i += 1
     end
   end
   
   { command: command, options: options, args: args }
+end
+
+# Schedule command handler
+def handle_schedule_command(app, args, options)
+  if args.empty?
+    warn "Error: schedule subcommand required"
+    app.print_help
+    exit 1
+  end
+
+  subcommand = args[0]
+  remaining_args = args[1..]
+
+  case subcommand
+  when 'create'
+    handle_schedule_create(app, remaining_args, options)
+  when 'list', 'ls'
+    app.list_schedules
+  when 'status'
+    app.show_schedule_status
+  when 'enable'
+    if remaining_args.empty?
+      warn "Error: schedule name required for enable command"
+      exit 1
+    end
+    app.enable_schedule(remaining_args[0])
+  when 'disable'
+    if remaining_args.empty?
+      warn "Error: schedule name required for disable command"
+      exit 1
+    end
+    app.disable_schedule(remaining_args[0])
+  when 'delete', 'rm'
+    if remaining_args.empty?
+      warn "Error: schedule name required for delete command"
+      exit 1
+    end
+    app.delete_schedule(remaining_args[0])
+  when 'test'
+    handle_schedule_test(app, remaining_args)
+  else
+    warn "Unknown schedule subcommand: #{subcommand}"
+    app.print_help
+    exit 1
+  end
+end
+
+def handle_schedule_create(app, args, options)
+  # Parse create command arguments
+  name = options[:name]
+  start_time = options[:start] || options[:start_time]
+  end_time = options[:end] || options[:end_time]
+  devices = options[:devices] || []
+  days = options[:days]
+  
+  # Validate required arguments
+  unless name && start_time && end_time
+    warn "Error: --name, --start, and --end are required for schedule create"
+    puts "\nExample: ruby pihole_manager.rb schedule create --name 'Night_Block' --start 22:00 --end 07:00"
+    exit 1
+  end
+  
+  # Parse days if provided
+  parsed_days = nil
+  if days
+    case days.downcase
+    when 'all', 'daily'
+      parsed_days = (1..7).to_a
+    when 'weekdays'
+      parsed_days = (1..5).to_a
+    when 'weekends'
+      parsed_days = [6, 7]
+    else
+      # Parse custom days (e.g., "1,2,3,4,5" or "mon,tue,wed")
+      parsed_days = parse_days_string(days)
+    end
+  end
+  
+  # Parse devices if provided
+  device_list = []
+  if devices.is_a?(String)
+    device_list = devices.split(',').map(&:strip)
+  elsif devices.is_a?(Array)
+    device_list = devices
+  end
+  
+  begin
+    app.create_schedule(
+      name: name,
+      start_time: start_time,
+      end_time: end_time,
+      devices: device_list,
+      days: parsed_days,
+      enabled: true
+    )
+  rescue => e
+    warn "Error creating schedule: #{e.message}"
+    exit 1
+  end
+end
+
+def handle_schedule_test(app, args)
+  if args.size < 2
+    warn "Error: schedule name and action (enable/disable) required for test command"
+    puts "\nExample: ruby pihole_manager.rb schedule test Night_Block enable"
+    exit 1
+  end
+  
+  name = args[0]
+  action = args[1]
+  
+  unless %w[enable disable].include?(action)
+    warn "Error: test action must be 'enable' or 'disable'"
+    exit 1
+  end
+  
+  app.test_schedule(name, action)
+end
+
+def parse_days_string(days_str)
+  day_map = {
+    'mon' => 1, 'monday' => 1,
+    'tue' => 2, 'tuesday' => 2,
+    'wed' => 3, 'wednesday' => 3,
+    'thu' => 4, 'thursday' => 4,
+    'fri' => 5, 'friday' => 5,
+    'sat' => 6, 'saturday' => 6,
+    'sun' => 7, 'sunday' => 7
+  }
+  
+  days = []
+  days_str.split(/[,\s]+/).each do |day|
+    day = day.strip.downcase
+    if day.match?(/^\d+$/)
+      # Numeric day
+      day_num = day.to_i
+      days << day_num if day_num.between?(1, 7)
+    elsif day_map[day]
+      # Named day
+      days << day_map[day]
+    end
+  end
+  
+  days.uniq.sort
 end
 
 # Main execution
@@ -125,6 +286,8 @@ def main
     app.pihole_setpassword
   when 'cli'
     app.pihole_cli(*remaining_args)
+  when 'schedule'
+    handle_schedule_command(app, remaining_args, options)
   when 'menu'
     app.run_menu
   when nil

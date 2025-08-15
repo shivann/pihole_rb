@@ -8,6 +8,7 @@ require_relative 'domain_service'
 require_relative 'installation_service'
 require_relative 'pihole_service'
 require_relative 'backup_service'
+require_relative 'schedule_service'
 require_relative 'menu_system'
 
 module PiHoleManager
@@ -28,6 +29,7 @@ module PiHoleManager
       @installation_service = InstallationService.new(@container, @config, @logger, @ui)
       @pihole_service = PiHoleService.new(@container, @config, @logger, @ui)
       @backup_service = BackupService.new(@config, @logger, @ui)
+      @schedule_service = ScheduleService.new(@container, @config, @logger, @ui)
       @menu_system = MenuSystem.new(self, @ui)
     end
 
@@ -144,6 +146,42 @@ module PiHoleManager
       @backup_service.restore(archive_path)
     end
 
+    # Schedule management methods
+    def create_schedule(name:, start_time:, end_time:, devices: [], days: nil, enabled: true)
+      @schedule_service.create_schedule(
+        name: name,
+        start_time: start_time,
+        end_time: end_time,
+        devices: devices,
+        days: days,
+        enabled: enabled
+      )
+    end
+
+    def list_schedules
+      @schedule_service.list_schedules
+    end
+
+    def enable_schedule(name)
+      @schedule_service.enable_schedule(name)
+    end
+
+    def disable_schedule(name)
+      @schedule_service.disable_schedule(name)
+    end
+
+    def delete_schedule(name)
+      @schedule_service.delete_schedule(name)
+    end
+
+    def show_schedule_status
+      @schedule_service.show_schedule_status
+    end
+
+    def test_schedule(name, action)
+      @schedule_service.test_schedule(name, action)
+    end
+
     # Advanced operations
     def container_shell
       @ui.puts 'Opening container shell...'
@@ -175,6 +213,14 @@ module PiHoleManager
           bulk-block <file>            Block domains from file
           bulk-unblock <file>          Unblock domains from file
 
+          schedule create              Create time-based blocking schedule
+          schedule list                List all schedules
+          schedule status              Show schedule status
+          schedule enable <name>       Enable a schedule
+          schedule disable <name>      Disable a schedule
+          schedule delete <name>       Delete a schedule
+          schedule test <name> <action> Test schedule (enable/disable)
+
           backup <path>                Backup configuration to path (dir or .tar.gz)
           restore <archive>            Restore configuration from archive
 
@@ -186,6 +232,25 @@ module PiHoleManager
           cli [command]                Access Pi-hole CLI directly (e.g., cli help, cli status)
 
           menu                         Launch interactive menu
+
+        Schedule Create Options:
+          --name <name>                Schedule name (required)
+          --start <time>               Start time in HH:MM format (required)
+          --end <time>                 End time in HH:MM format (required)
+          --days <days>                Days: all, weekdays, weekends, or custom (e.g., mon,tue,wed)
+          --devices <ips>              Comma-separated device IPs (optional, default: all devices)
+
+        Examples:
+          # Network-wide blocking 10 PM to 6 AM every day
+          ruby pihole_manager.rb schedule create --name Night_Block --start 22:00 --end 06:00
+
+          # Block specific devices on weekdays 9 AM to 5 PM
+          ruby pihole_manager.rb schedule create --name Work_Hours --start 09:00 --end 17:00 \\
+            --days weekdays --devices 192.168.1.50,192.168.1.51
+
+          # Weekend evening blocking
+          ruby pihole_manager.rb schedule create --name Weekend_Block --start 20:00 --end 23:59 \\
+            --days weekends
 
         Options:
           --config <file>              Use custom config file
