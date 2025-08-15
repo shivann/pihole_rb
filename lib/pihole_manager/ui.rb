@@ -48,8 +48,8 @@ module PiHoleManager
     end
 
     def wait_for_key
-      print '\nPress Enter to continue...'
-      STDIN.gets
+      print '\nPress any key to continue...'
+      STDIN.getch
     end
 
     def puts(message = '')

@@ -23,10 +23,10 @@ module PiHoleManager
         when '4' then logs_monitoring_menu
         when '5' then advanced_options_menu
         when '0', nil then break
-        else @ui.puts_error('Invalid choice.')
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == '0'
       end
     end
 
@@ -52,28 +52,40 @@ module PiHoleManager
       loop do
         @ui.clear_screen
         @ui.puts_info('==== Container Management ====')
-        @ui.puts 'a. Install Pi-hole'
-        @ui.puts 'b. Start container'
-        @ui.puts 'c. Stop container'
-        @ui.puts 'd. Restart container'
-        @ui.puts 'e. Update container'
-        @ui.puts 'f. Show status'
-        @ui.puts 'x. Back'
+        @ui.puts '1. Install Pi-hole'
+        @ui.puts '2. Start container'
+        @ui.puts '3. Stop container'
+        @ui.puts '4. Restart container'
+        @ui.puts '5. Update container'
+        @ui.puts '6. Show status'
+        @ui.puts '0. Back'
         
-        choice = @ui.prompt('\nEnter your choice: ')&.strip&.downcase
+        choice = @ui.prompt('\nEnter your choice: ')&.strip
         
         case choice
-        when 'a' then @app.install
-        when 'b' then @app.start_container
-        when 'c' then @app.stop_container
-        when 'd' then @app.restart_container
-        when 'e' then @app.update_container
-        when 'f' then @app.show_status
-        when 'x', nil then break
-        else @ui.puts_error('Invalid choice.')
+        when '1' 
+          @app.install
+          @ui.wait_for_key
+        when '2' 
+          @app.start_container
+          @ui.wait_for_key
+        when '3' 
+          @app.stop_container
+          @ui.wait_for_key
+        when '4' 
+          @app.restart_container
+          @ui.wait_for_key
+        when '5' 
+          @app.update_container
+          @ui.wait_for_key
+        when '6' 
+          @app.show_status
+          @ui.wait_for_key
+        when '0', nil then break
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == 'x'
       end
     end
 
@@ -81,34 +93,48 @@ module PiHoleManager
       loop do
         @ui.clear_screen
         @ui.puts_info('==== Domain Management ====')
-        @ui.puts 'a. Block domain'
-        @ui.puts 'b. Unblock domain'
-        @ui.puts 'c. List blocked domains'
-        @ui.puts 'd. Bulk block domains (from file)'
-        @ui.puts 'e. Bulk unblock domains (from file)'
-        @ui.puts 'x. Back'
+        @ui.puts '1. Block domain'
+        @ui.puts '2. Unblock domain'
+        @ui.puts '3. List blocked domains'
+        @ui.puts '4. Bulk block domains (from file)'
+        @ui.puts '5. Bulk unblock domains (from file)'
+        @ui.puts '0. Back'
         
-        choice = @ui.prompt('\nEnter your choice: ')&.strip&.downcase
+        choice = @ui.prompt('\nEnter your choice: ')&.strip
         
         case choice
-        when 'a'
+        when '1'
           domain = @ui.prompt('Enter domain to block: ')
-          @app.block_domain(domain) if domain && !domain.empty?
-        when 'b'
+          if domain && !domain.empty?
+            @app.block_domain(domain)
+            @ui.wait_for_key
+          end
+        when '2'
           domain = @ui.prompt('Enter domain to unblock: ')
-          @app.unblock_domain(domain) if domain && !domain.empty?
-        when 'c' then @app.list_blocked_domains
-        when 'd'
+          if domain && !domain.empty?
+            @app.unblock_domain(domain)
+            @ui.wait_for_key
+          end
+        when '3' 
+          @app.list_blocked_domains
+          @ui.wait_for_key
+        when '4'
           file_path = @ui.prompt('Enter file path: ')
-          @app.bulk_block(file_path) if file_path && !file_path.empty?
-        when 'e'
+          if file_path && !file_path.empty?
+            @app.bulk_block(file_path)
+            @ui.wait_for_key
+          end
+        when '5'
           file_path = @ui.prompt('Enter file path: ')
-          @app.bulk_unblock(file_path) if file_path && !file_path.empty?
-        when 'x', nil then break
-        else @ui.puts_error('Invalid choice.')
+          if file_path && !file_path.empty?
+            @app.bulk_unblock(file_path)
+            @ui.wait_for_key
+          end
+        when '0', nil then break
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == 'x'
       end
     end
 
@@ -116,32 +142,46 @@ module PiHoleManager
       loop do
         @ui.clear_screen
         @ui.puts_info('==== Configuration ====')
-        @ui.puts 'a. View current settings'
-        @ui.puts 'b. Change admin password'
-        @ui.puts 'c. Interactive password setup (pihole setpassword)'
-        @ui.puts 'd. Update timezone'
-        @ui.puts 'e. Export configuration (backup)'
-        @ui.puts 'f. Import configuration (restore)'
-        @ui.puts 'x. Back'
+        @ui.puts '1. View current settings'
+        @ui.puts '2. Change admin password'
+        @ui.puts '3. Interactive password setup (pihole setpassword)'
+        @ui.puts '4. Update timezone'
+        @ui.puts '5. Export configuration (backup)'
+        @ui.puts '6. Import configuration (restore)'
+        @ui.puts '0. Back'
         
-        choice = @ui.prompt('\nEnter your choice: ')&.strip&.downcase
+        choice = @ui.prompt('\nEnter your choice: ')&.strip
         
         case choice
-        when 'a' then @app.view_config
-        when 'b' then @app.change_admin_password
-        when 'c' then @app.pihole_setpassword
-        when 'd' then @app.update_timezone
-        when 'e'
+        when '1' 
+          @app.view_config
+          @ui.wait_for_key
+        when '2' 
+          @app.change_admin_password
+          @ui.wait_for_key
+        when '3' 
+          @app.pihole_setpassword
+          @ui.wait_for_key
+        when '4' 
+          @app.update_timezone
+          @ui.wait_for_key
+        when '5'
           path = @ui.prompt('Enter destination path (dir or file): ')
-          @app.backup(path) if path && !path.empty?
-        when 'f'
+          if path && !path.empty?
+            @app.backup(path)
+            @ui.wait_for_key
+          end
+        when '6'
           path = @ui.prompt('Enter archive path: ')
-          @app.restore(path) if path && !path.empty?
-        when 'x', nil then break
-        else @ui.puts_error('Invalid choice.')
+          if path && !path.empty?
+            @app.restore(path)
+            @ui.wait_for_key
+          end
+        when '0', nil then break
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == 'x'
       end
     end
 
@@ -149,24 +189,32 @@ module PiHoleManager
       loop do
         @ui.clear_screen
         @ui.puts_info('==== Logs & Monitoring ====')
-        @ui.puts 'a. View container logs'
-        @ui.puts 'b. View Pi-hole query logs'
-        @ui.puts 'c. Show DNS statistics'
-        @ui.puts 'd. View manager logs'
-        @ui.puts 'x. Back'
+        @ui.puts '1. View container logs'
+        @ui.puts '2. View Pi-hole query logs'
+        @ui.puts '3. Show DNS statistics'
+        @ui.puts '4. View manager logs'
+        @ui.puts '0. Back'
         
-        choice = @ui.prompt('\nEnter your choice: ')&.strip&.downcase
+        choice = @ui.prompt('\nEnter your choice: ')&.strip
         
         case choice
-        when 'a' then @app.show_logs
-        when 'b' then @app.show_query_logs
-        when 'c' then @app.show_stats
-        when 'd' then @app.show_manager_logs
-        when 'x', nil then break
-        else @ui.puts_error('Invalid choice.')
+        when '1' 
+          @app.show_logs
+          @ui.wait_for_key
+        when '2' 
+          @app.show_query_logs
+          @ui.wait_for_key
+        when '3' 
+          @app.show_stats
+          @ui.wait_for_key
+        when '4' 
+          @app.show_manager_logs
+          @ui.wait_for_key
+        when '0', nil then break
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == 'x'
       end
     end
 
@@ -174,22 +222,28 @@ module PiHoleManager
       loop do
         @ui.clear_screen
         @ui.puts_info('==== Advanced Options ====')
-        @ui.puts 'a. Pi-hole CLI (interactive)'
-        @ui.puts 'b. Container shell (bash)'
-        @ui.puts 'c. Open web interface'
-        @ui.puts 'x. Back'
+        @ui.puts '1. Pi-hole CLI (interactive)'
+        @ui.puts '2. Container shell (bash)'
+        @ui.puts '3. Open web interface'
+        @ui.puts '0. Back'
         
-        choice = @ui.prompt('\nEnter your choice: ')&.strip&.downcase
+        choice = @ui.prompt('\nEnter your choice: ')&.strip
         
         case choice
-        when 'a' then @app.pihole_cli
-        when 'b' then @app.container_shell
-        when 'c' then @app.open_web
-        when 'x', nil then break
-        else @ui.puts_error('Invalid choice.')
+        when '1' 
+          @app.pihole_cli
+          @ui.wait_for_key
+        when '2' 
+          @app.container_shell
+          @ui.wait_for_key
+        when '3' 
+          @app.open_web
+          @ui.wait_for_key
+        when '0', nil then break
+        else 
+          @ui.puts_error('Invalid choice.')
+          @ui.wait_for_key
         end
-        
-        @ui.wait_for_key unless choice == 'x'
       end
     end
   end
