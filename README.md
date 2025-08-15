@@ -86,6 +86,20 @@ ruby pihole_manager.rb list-blocked
 
 ## 📖 Usage Guide
 
+### 🚀 Quick Router Setup Reference
+**Need to configure your router quickly?** Here's the essential info:
+
+1. **Get your Mac mini's IP**: `ifconfig | grep "inet " | grep -v 127.0.0.1`
+2. **Set static IP** for Mac mini (System Preferences > Network)
+3. **Access router admin** (usually `192.168.1.1` or `192.168.0.1`)
+4. **Find DNS settings** (look for DHCP, DNS, or Internet settings)
+5. **Set Primary DNS** to your Mac mini's IP
+6. **Set Secondary DNS** to `1.1.1.1` or `8.8.8.8`
+7. **Save & reboot router**
+8. **Test**: Visit `http://pi.hole/admin` to verify
+
+📋 **See detailed router instructions in the [Network Setup](#-network-setup) section below.**
+
 ### Interactive Menu System
 
 When you run the script without arguments, you'll see:
@@ -175,15 +189,176 @@ ruby pihole_manager.rb bulk-block blocked_domains.txt
 
 ## 🏠 Network Setup
 
-### DNS Configuration
-To use Pi-hole as your network DNS server:
+### Prerequisites for Router Configuration
+1. **Get your Mac mini's IP address**:
+   ```bash
+   ifconfig | grep "inet " | grep -v 127.0.0.1
+   # Example output: inet 192.168.1.100 netmask 0xffffff00 broadcast 192.168.1.255
+   ```
 
-1. **Configure your router** to use the Mac mini's IP as the primary DNS server
-2. **Or configure individual devices** to use the Pi-hole IP address
-3. **Test DNS resolution**: `nslookup google.com <your-mac-mini-ip>`
+2. **Set a static IP for your Mac mini** (highly recommended):
+   - Go to **System Preferences > Network**
+   - Select your network connection (Wi-Fi or Ethernet)
+   - Click **Advanced > TCP/IP**
+   - Change **Configure IPv4** from "Using DHCP" to "Manually"
+   - Set a static IP (e.g., `192.168.1.100`)
+   - Note this IP address - you'll need it for router configuration
 
-### Static IP Recommendation
-Set a static IP for your Mac mini to ensure consistent DNS service.
+### Router Configuration Guide
+
+#### Option 1: Network-Wide Configuration (Recommended)
+Configure your router to use Pi-hole as the DNS server for all devices.
+
+##### Common Router Brands:
+
+**ASUS Routers:**
+1. Access router admin: `http://192.168.1.1` (or `192.168.50.1`)
+2. Login with admin credentials
+3. Go to **Advanced Settings > LAN > DHCP Server**
+4. Set **DNS Server 1** to your Mac mini's IP (e.g., `192.168.1.100`)
+5. Set **DNS Server 2** to `1.1.1.1` (Cloudflare as backup)
+6. Click **Apply**
+7. Reboot router for changes to take effect
+
+**Netgear Routers:**
+1. Access router admin: `http://192.168.1.1` or `http://routerlogin.net`
+2. Login with admin credentials
+3. Go to **Advanced > Setup > Internet Setup**
+4. Under **Domain Name Server (DNS) Address**, select **Use These DNS Servers**
+5. Set **Primary DNS** to your Mac mini's IP
+6. Set **Secondary DNS** to `8.8.8.8` (Google DNS as backup)
+7. Click **Apply**
+
+**Linksys Routers:**
+1. Access router admin: `http://192.168.1.1`
+2. Login with admin credentials
+3. Go to **Smart Wi-Fi Tools > Internet**
+4. Under **Internet Connection Type**, click **Edit**
+5. Set **Static DNS 1** to your Mac mini's IP
+6. Set **Static DNS 2** to `9.9.9.9` (Quad9 as backup)
+7. Click **OK** and **Apply**
+
+**TP-Link Routers:**
+1. Access router admin: `http://192.168.1.1` or `http://tplinkwifi.net`
+2. Login with admin credentials
+3. Go to **Advanced > Network > Internet**
+4. Set **Primary DNS** to your Mac mini's IP
+5. Set **Secondary DNS** to `1.1.1.1`
+6. Click **Save**
+
+**Apple AirPort (Legacy):**
+1. Open **AirPort Utility** on Mac
+2. Select your AirPort router
+3. Click **Edit**
+4. Go to **Internet** tab
+5. Under **Internet Options**, click **Configure IPv4**
+6. Set **DNS Servers** to your Mac mini's IP
+7. Add backup DNS (e.g., `8.8.8.8`)
+8. Click **Update**
+
+**Generic Router Instructions:**
+1. Access router admin panel (usually `192.168.1.1` or `192.168.0.1`)
+2. Look for **DHCP Settings**, **DNS Settings**, or **Internet Settings**
+3. Find **Primary/Secondary DNS** or **DNS Server** fields
+4. Set Primary DNS to your Mac mini's IP address
+5. Set Secondary DNS to a reliable backup (e.g., `1.1.1.1`, `8.8.8.8`)
+6. Save settings and reboot router
+
+#### Option 2: Device-Specific Configuration
+Configure individual devices when router configuration isn't possible.
+
+**macOS:**
+1. **System Preferences > Network**
+2. Select your connection > **Advanced > DNS**
+3. Add your Mac mini's IP to DNS Servers list
+4. Drag it to the top of the list
+5. Click **OK > Apply**
+
+**iOS/iPadOS:**
+1. **Settings > Wi-Fi**
+2. Tap the (i) next to your network
+3. Scroll down to **Configure DNS > Manual**
+4. Add your Mac mini's IP as a DNS server
+5. Tap **Save**
+
+**Windows:**
+1. **Control Panel > Network and Internet > Network Connections**
+2. Right-click your connection > **Properties**
+3. Select **Internet Protocol Version 4 (TCP/IPv4)** > **Properties**
+4. Select **Use the following DNS server addresses**
+5. Set **Preferred DNS** to your Mac mini's IP
+6. Click **OK**
+
+**Android:**
+1. **Settings > Wi-Fi**
+2. Long press your network > **Modify network**
+3. **Advanced options > IP settings > Static**
+4. Set **DNS 1** to your Mac mini's IP
+5. Tap **Save**
+
+### Network Verification & Testing
+
+#### Verify Pi-hole is Working
+1. **Check DNS resolution**:
+   ```bash
+   # Test from command line
+   nslookup google.com 192.168.1.100
+   
+   # Should return results without errors
+   ```
+
+2. **Test ad blocking**:
+   ```bash
+   # Try to resolve known ad domain
+   nslookup doubleclick.net 192.168.1.100
+   
+   # Should return Pi-hole's blocking IP (0.0.0.0 or Pi-hole IP)
+   ```
+
+3. **Web-based verification**:
+   - Visit: `http://pi.hole/admin` or `http://your-mac-mini-ip/admin`
+   - Check **Query Log** for DNS requests
+   - Visit an ad-heavy website and verify blocked queries appear
+
+#### Network Performance Testing
+```bash
+# Test DNS response time
+dig @192.168.1.100 google.com
+
+# Compare with public DNS
+dig @8.8.8.8 google.com
+
+# Test from different devices on network
+ping pi.hole
+```
+
+### Advanced Router Configuration
+
+#### DHCP Reservation
+Set up DHCP reservation to ensure your Mac mini always gets the same IP:
+
+1. Access router admin panel
+2. Go to **DHCP Settings** or **LAN Settings**
+3. Look for **DHCP Reservation** or **Static DHCP**
+4. Add your Mac mini's MAC address and desired IP
+5. Apply settings
+
+#### Conditional Forwarding (Optional)
+For better local network name resolution:
+
+1. In Pi-hole admin: **Settings > DNS**
+2. Enable **Conditional forwarding**
+3. Set **Local network** to your router's IP range (e.g., `192.168.1.0/24`)
+4. Set **Router IP** to your router's address (e.g., `192.168.1.1`)
+5. Save settings
+
+#### IPv6 Configuration
+If your network uses IPv6:
+
+1. Set your Mac mini's IPv6 address as DNS in router
+2. In Pi-hole admin: **Settings > DNS**
+3. Enable IPv6 DNS servers if needed
+4. Consider disabling IPv6 if experiencing issues
 
 ## 🔍 Troubleshooting
 
@@ -217,6 +392,101 @@ ruby pihole_manager.rb status
 - Install Docker Desktop for Mac from the official website
 - Start Docker Desktop: `open -a Docker`
 - Verify installation: `docker --version`
+
+### DNS & Router Configuration Issues
+
+**DNS not resolving through Pi-hole**
+```bash
+# Check if devices are using Pi-hole DNS
+nslookup google.com
+# Should show Pi-hole's IP in the server field
+
+# Force DNS check with specific server
+nslookup google.com 192.168.1.100
+
+# Check what DNS your device is actually using
+scutil --dns | grep 'nameserver\['
+```
+
+**Router configuration not taking effect**
+1. **Reboot router** after changing DNS settings
+2. **Release/renew DHCP leases** on client devices:
+   ```bash
+   # macOS
+   sudo dscacheutil -flushcache
+   sudo killall -HUP mDNSResponder
+   
+   # Renew DHCP lease
+   sudo ipconfig set en0 DHCP
+   ```
+3. **Check router DHCP lease time** - changes may take hours to propagate
+4. **Manually set DNS** on a test device to verify Pi-hole is working
+
+**Devices still showing ads**
+1. **Clear browser cache and DNS cache**
+2. **Check if device has hardcoded DNS** (some smart TVs, streaming devices)
+3. **Verify in Pi-hole query log** that requests are being received
+4. **Check whitelist/blacklist** settings in Pi-hole admin
+5. **Some ads may be served from the same domain** as content (can't be blocked)
+
+**Slow internet after Pi-hole setup**
+```bash
+# Test DNS response times
+dig @192.168.1.100 google.com | grep "Query time"
+dig @8.8.8.8 google.com | grep "Query time"
+
+# If Pi-hole is slower, check:
+# 1. Upstream DNS servers in Pi-hole settings
+# 2. Network congestion
+# 3. Mac mini performance/resources
+```
+
+**Can't access local devices by name**
+1. **Enable conditional forwarding** in Pi-hole:
+   - Pi-hole Admin → Settings → DNS
+   - Check "Use Conditional Forwarding"
+   - Set local network range (e.g., 192.168.1.0/24)
+   - Set router IP
+
+**Some websites won't load**
+1. **Check Pi-hole query log** for blocked domains
+2. **Temporarily disable Pi-hole** to test:
+   ```bash
+   ruby pihole_manager.rb stop
+   # Test website, then restart:
+   ruby pihole_manager.rb start
+   ```
+3. **Whitelist necessary domains** in Pi-hole admin
+4. **Check if website uses multiple domains** for content delivery
+
+**Network devices can't find each other**
+1. **Verify router's local DNS** is still functioning
+2. **Check Pi-hole conditional forwarding** settings
+3. **Ensure mDNS/Bonjour** services are not blocked
+4. **Consider adding local DNS records** in Pi-hole:
+   - Pi-hole Admin → Local DNS → DNS Records
+
+### Router-Specific Troubleshooting
+
+**ASUS Router Issues**
+- Try **Adaptive QoS** → Disable if causing DNS issues
+- Check **AiProtection** settings aren't overriding DNS
+- Some models require setting DNS in **WAN** settings instead of DHCP
+
+**Netgear Router Issues**
+- **Dynamic DNS** settings may override custom DNS
+- Check **Circle with Disney** isn't managing DNS
+- Some models need DNS set in **Internet** tab rather than DHCP
+
+**ISP Router/Modem Combo Issues**
+- **Bridge mode** may be required for proper DNS control
+- Some ISP devices **override DNS settings**
+- Consider using **double NAT** setup with your own router
+
+**Enterprise/Business Routers**
+- May have **DNS filtering** policies that override settings
+- Check for **content filtering** or **security features**
+- **VLAN configurations** may affect DNS propagation
 
 ### Log Files
 - Manager logs: `/opt/pihole/pihole-manager.log`
