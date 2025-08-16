@@ -308,8 +308,11 @@ module PiHoleManager
       
       # Get group ID
       get_id_cmd = "sqlite3 /etc/pihole/gravity.db \"SELECT id FROM 'group' WHERE name='#{group_name}';\""
-      group_id = @container.execute_command(get_id_cmd)&.strip
+      group_id_result = @container.execute_command_capture(get_id_cmd)
       
+      return unless group_id_result
+      
+      group_id = group_id_result.strip
       return unless group_id && !group_id.empty?
       
       # Remove group associations

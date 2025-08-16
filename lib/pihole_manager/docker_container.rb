@@ -117,6 +117,19 @@ module PiHoleManager
       end
     end
 
+    def execute_command_capture(command)
+      ensure_container_running!
+      cmd = %(docker exec #{@config['container_name']} #{command})
+      stdout, stderr, status = run_capture(cmd)
+      
+      if status.success?
+        stdout
+      else
+        @logger.log "Command failed: #{cmd}, stderr: #{stderr}"
+        nil
+      end
+    end
+
     def get_logs(tail_lines: 200)
       name = @config['container_name']
       cmd = %(docker logs #{name} --tail #{tail_lines})
