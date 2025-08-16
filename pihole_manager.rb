@@ -246,6 +246,8 @@ def main
     app.unblock_domain(remaining_args[0])
   when 'list-blocked'
     app.list_blocked_domains
+  when 'regex-examples'
+    app.show_regex_examples
   when 'bulk-block'
     if remaining_args.empty?
       warn "Error: file path argument required for bulk-block command"

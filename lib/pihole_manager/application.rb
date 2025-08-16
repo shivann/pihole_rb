@@ -90,6 +90,10 @@ module PiHoleManager
       @domain_service.bulk_unblock(file_path)
     end
 
+    def show_regex_examples
+      @domain_service.show_regex_examples
+    end
+
     # Pi-hole service methods
     def pihole_setpassword
       @pihole_service.setpassword
@@ -206,9 +210,10 @@ module PiHoleManager
           status                       Show container status
           update                       Update Pi-hole container
 
-          block <domain>               Block a domain
-          unblock <domain>             Unblock a domain
-          list-blocked                 List blocked domains
+          block <domain|pattern>       Block a domain or regex pattern
+          unblock <domain|pattern>     Unblock a domain or regex pattern
+          list-blocked                 List blocked domains and regex patterns
+          regex-examples               Show common regex pattern examples
 
           bulk-block <file>            Block domains from file
           bulk-unblock <file>          Unblock domains from file
@@ -240,7 +245,20 @@ module PiHoleManager
           --days <days>                Days: all, weekdays, weekends, or custom (e.g., mon,tue,wed)
           --devices <ips>              Comma-separated device IPs (optional, default: all devices)
 
-        Examples:
+        Domain/Regex Examples:
+          # Block exact domain
+          ruby pihole_manager.rb block facebook.com
+
+          # Block domain and all subdomains (regex)
+          ruby pihole_manager.rb block 'facebook\\.com$'
+
+          # Block any domain containing 'ads'
+          ruby pihole_manager.rb block '.*ads.*'
+
+          # Block all .tk domains
+          ruby pihole_manager.rb block '\\.tk$'
+
+        Schedule Examples:
           # Network-wide blocking 10 PM to 6 AM every day
           ruby pihole_manager.rb schedule create --name Night_Block --start 22:00 --end 06:00
 

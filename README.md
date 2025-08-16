@@ -7,7 +7,7 @@ A Ruby-based CLI tool for managing Pi-hole DNS server deployments using Docker o
 - **Easy Installation**: Automated Pi-hole container setup with Docker
 - **Interactive CLI Menu**: User-friendly menu system for all operations
 - **Direct Commands**: Power-user friendly command-line interface
-- **Domain Management**: Block/unblock domains with bulk operations support
+- **Domain Management**: Block/unblock domains and regex patterns with bulk operations support
 - **Time-Based Blocking**: Schedule automatic blocking during specific hours/days
 - **Device-Specific Control**: Target blocking to specific devices or network-wide
 - **Configuration Management**: Backup, restore, and modify Pi-hole settings
@@ -137,11 +137,36 @@ ruby pihole_manager.rb update               # Update Pi-hole to latest version
 
 #### Domain Management
 ```bash
-ruby pihole_manager.rb block <domain>       # Block a specific domain
-ruby pihole_manager.rb unblock <domain>     # Unblock a specific domain
-ruby pihole_manager.rb list-blocked         # List all blocked domains
+# Block/unblock exact domains or regex patterns
+ruby pihole_manager.rb block <domain|pattern>       # Block a domain or regex pattern
+ruby pihole_manager.rb unblock <domain|pattern>     # Unblock a domain or regex pattern
+ruby pihole_manager.rb list-blocked                 # List blocked domains and regex patterns
+ruby pihole_manager.rb regex-examples               # Show common regex pattern examples
+
+# Bulk operations
 ruby pihole_manager.rb bulk-block <file>    # Block domains from file
 ruby pihole_manager.rb bulk-unblock <file>  # Unblock domains from file
+```
+
+#### Regex Pattern Examples
+```bash
+# Block exact domain and all subdomains
+ruby pihole_manager.rb block 'facebook\.com$'
+
+# Block any domain containing 'ads'
+ruby pihole_manager.rb block '.*ads.*'
+
+# Block all .tk domains
+ruby pihole_manager.rb block '\.tk$'
+
+# Block tracking domains
+ruby pihole_manager.rb block '.*tracking.*'
+
+# Block analytics domains  
+ruby pihole_manager.rb block '.*analytics.*'
+
+# View more examples
+ruby pihole_manager.rb regex-examples
 ```
 
 #### Schedule Management (Time-based Blocking)
